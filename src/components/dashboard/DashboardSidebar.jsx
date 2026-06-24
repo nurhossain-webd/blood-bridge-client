@@ -95,13 +95,19 @@ export default function DashboardSidebar() {
     menuItems = volunteerLinks;
   }
 
-  const handleLogout = async () => {
+ const handleLogout = async () => {
+  try {
     await axiosPublic.post("/logout");
-await authClient.signOut();
+    await authClient.signOut();
+
     toast.success("Logged out successfully");
     router.push("/login");
     router.refresh();
-  };
+  } catch (error) {
+    console.error(error);
+    toast.error("Logout failed");
+  }
+};
 
   return (
     <aside className="w-full border-b bg-white p-4 shadow-sm lg:min-h-screen lg:w-72 lg:border-b-0 lg:border-r">
