@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { authClient } from "@/lib/auth-client";
+import axiosPublic from "@/lib/axiosPublic";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -25,6 +26,8 @@ export default function LoginForm() {
       toast.error(error.message || "Login failed");
       return;
     }
+
+    await axiosPublic.post("/jwt", { email: data.email });
 
     toast.success("Login successful");
     router.push("/dashboard");

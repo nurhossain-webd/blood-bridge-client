@@ -44,7 +44,6 @@ export default function RegisterForm() {
     formData.append("image", imageFile);
 
     const imageUploadUrl = `https://api.imgbb.com/1/upload?key=${apiKey}`;
-
     const response = await axios.post(imageUploadUrl, formData);
 
     return response.data.data.url;
@@ -60,7 +59,7 @@ export default function RegisterForm() {
         avatarUrl = await uploadImageToImgbb(data.avatar[0]);
       }
 
-      const { data: authData, error } = await authClient.signUp.email({
+      const { error } = await authClient.signUp.email({
         name: data.name,
         email: data.email,
         password: data.password,
@@ -82,13 +81,15 @@ export default function RegisterForm() {
       };
 
       await axiosPublic.post("/users", userInfo);
+      await axiosPublic.post("/jwt", { email: data.email });
 
       toast.success("Registration successful");
       reset();
       router.push("/dashboard");
+      router.refresh();
     } catch (error) {
       console.error(error);
-      toast.error(error.message || "Something went wrong");
+      toast.error(error.response?.data?.message || error.message || "Something went wrong");
     } finally {
       setLoading(false);
     }

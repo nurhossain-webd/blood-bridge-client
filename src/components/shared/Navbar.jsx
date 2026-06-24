@@ -13,7 +13,8 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
 
   const handleLogout = async () => {
-    await authClient.signOut();
+    await axiosPublic.post("/logout");
+await authClient.signOut();
     toast.success("Logged out successfully");
     router.push("/");
     router.refresh();

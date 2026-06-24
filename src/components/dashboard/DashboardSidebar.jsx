@@ -14,6 +14,7 @@ import {
 import { authClient } from "@/lib/auth-client";
 import useDbUser from "@/hooks/useDbUser";
 import toast from "react-hot-toast";
+import axiosPublic from "@/lib/axiosPublic";
 
 export default function DashboardSidebar() {
   const pathname = usePathname();
@@ -95,7 +96,8 @@ export default function DashboardSidebar() {
   }
 
   const handleLogout = async () => {
-    await authClient.signOut();
+    await axiosPublic.post("/logout");
+await authClient.signOut();
     toast.success("Logged out successfully");
     router.push("/login");
     router.refresh();
