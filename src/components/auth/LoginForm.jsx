@@ -36,7 +36,7 @@ export default function LoginForm() {
 
       toast.success("Login successful");
 
-      router.push("/");
+      router.push("/dashboard");
       router.refresh();
     } catch (error) {
       console.error(error);

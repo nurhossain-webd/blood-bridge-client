@@ -98,7 +98,7 @@ export default function RegisterForm() {
 
       toast.success("Registration successful");
       reset();
-      router.push("/");
+      router.push("/dashboard");
       router.refresh();
     } catch (error) {
       console.error(error);

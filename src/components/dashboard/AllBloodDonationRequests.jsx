@@ -8,6 +8,7 @@ import axiosPublic from "@/lib/axiosPublic";
 import useDbUser from "@/hooks/useDbUser";
 
 const statuses = ["pending", "inprogress", "done", "canceled"];
+const limit = 10;
 
 export default function AllBloodDonationRequests() {
   const { dbUser, loading: userLoading } = useDbUser();
@@ -15,20 +16,37 @@ export default function AllBloodDonationRequests() {
   const [statusFilter, setStatusFilter] = useState("");
   const [loading, setLoading] = useState(true);
 
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
   const loadRequests = async () => {
     setLoading(true);
 
-    const url = statusFilter
-      ? `/donation-requests?status=${statusFilter}`
-      : "/donation-requests";
+    try {
+      const res = await axiosPublic.get("/donation-requests", {
+        params: {
+          status: statusFilter || undefined,
+          page,
+          limit,
+        },
+      });
 
-    const res = await axiosPublic.get(url);
-    setRequests(res.data);
-    setLoading(false);
+      setRequests(res.data.requests || []);
+      setTotalPages(res.data.totalPages || 1);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to load donation requests");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     loadRequests();
+  }, [statusFilter, page]);
+
+  useEffect(() => {
+    setPage(1);
   }, [statusFilter]);
 
   const handleStatusChange = async (id, status) => {
@@ -58,7 +76,12 @@ export default function AllBloodDonationRequests() {
 
       if (res.data.deletedCount > 0) {
         toast.success("Donation request deleted");
-        loadRequests();
+
+        if (requests.length === 1 && page > 1) {
+          setPage(page - 1);
+        } else {
+          loadRequests();
+        }
       }
     }
   };
@@ -108,7 +131,6 @@ export default function AllBloodDonationRequests() {
         </select>
       </div>
 
-      {/* Mobile / Tablet Cards */}
       <div className="grid gap-4 xl:hidden">
         {requests.map((request) => (
           <div key={request._id} className="rounded-2xl border bg-white p-4 shadow-sm">
@@ -195,7 +217,6 @@ export default function AllBloodDonationRequests() {
         ))}
       </div>
 
-      {/* Desktop Table */}
       <div className="hidden overflow-x-auto rounded-2xl border xl:block">
         <table className="w-full min-w-[1150px] border-collapse text-left">
           <thead className="bg-red-50 text-sm text-gray-700">
@@ -307,7 +328,51 @@ export default function AllBloodDonationRequests() {
           No blood donation request found.
         </div>
       )}
+
+      <Pagination page={page} totalPages={totalPages} setPage={setPage} />
     </section>
+  );
+}
+
+function Pagination({ page, totalPages, setPage }) {
+  if (totalPages <= 1) return null;
+
+  return (
+    <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+      <button
+        onClick={() => setPage(page - 1)}
+        disabled={page === 1}
+        className="rounded-lg border px-4 py-2 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
+      >
+        Prev
+      </button>
+
+      {[...Array(totalPages)].map((_, index) => {
+        const pageNumber = index + 1;
+
+        return (
+          <button
+            key={pageNumber}
+            onClick={() => setPage(pageNumber)}
+            className={`rounded-lg border px-4 py-2 ${
+              page === pageNumber
+                ? "bg-red-700 text-white"
+                : "hover:bg-red-50 hover:text-red-700"
+            }`}
+          >
+            {pageNumber}
+          </button>
+        );
+      })}
+
+      <button
+        onClick={() => setPage(page + 1)}
+        disabled={page === totalPages}
+        className="rounded-lg border px-4 py-2 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
+      >
+        Next
+      </button>
+    </div>
   );
 }
 

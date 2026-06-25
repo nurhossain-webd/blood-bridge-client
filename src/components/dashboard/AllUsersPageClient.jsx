@@ -4,21 +4,45 @@ import { useEffect, useState } from "react";
 import axiosPublic from "@/lib/axiosPublic";
 import toast from "react-hot-toast";
 
+const limit = 10;
+
 export default function AllUsersPage() {
   const [users, setUsers] = useState([]);
   const [statusFilter, setStatusFilter] = useState("");
   const [loading, setLoading] = useState(true);
 
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
   const loadUsers = async () => {
-    setLoading(true);
-    const res = await axiosPublic.get("/users");
-    setUsers(res.data);
-    setLoading(false);
+    try {
+      setLoading(true);
+
+      const res = await axiosPublic.get("/users", {
+        params: {
+          status: statusFilter || undefined,
+          page,
+          limit,
+        },
+      });
+
+      setUsers(res.data.users || []);
+      setTotalPages(res.data.totalPages || 1);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to load users");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     loadUsers();
-  }, []);
+  }, [statusFilter, page]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [statusFilter]);
 
   const updateRole = async (id, role) => {
     const res = await axiosPublic.patch(`/users/role/${id}`, { role });
@@ -37,10 +61,6 @@ export default function AllUsersPage() {
       loadUsers();
     }
   };
-
-  const filteredUsers = statusFilter
-    ? users.filter((user) => user.status === statusFilter)
-    : users;
 
   if (loading) {
     return (
@@ -85,12 +105,12 @@ export default function AllUsersPage() {
           </thead>
 
           <tbody>
-            {filteredUsers.map((user) => (
+            {users.map((user) => (
               <tr key={user._id} className="border-t text-sm">
                 <td className="p-4">
                   <div className="flex items-center gap-3">
                     <img
-                      src={user.avatar}
+                      src={user.avatar || "/avatar.png"}
                       alt={user.name}
                       className="h-11 w-11 rounded-full object-cover"
                     />
@@ -126,12 +146,13 @@ export default function AllUsersPage() {
                 <td className="p-4">
                   <div className="flex flex-wrap gap-2">
                     <button
-  disabled={user.role === "donor"}
-  onClick={() => updateRole(user._id, "donor")}
-  className="rounded-lg bg-gray-700 px-3 py-2 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:bg-gray-300"
->
-  Donor
-</button>
+                      disabled={user.role === "donor"}
+                      onClick={() => updateRole(user._id, "donor")}
+                      className="rounded-lg bg-gray-700 px-3 py-2 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:bg-gray-300"
+                    >
+                      Donor
+                    </button>
+
                     <button
                       disabled={user.role === "volunteer"}
                       onClick={() => updateRole(user._id, "volunteer")}
@@ -172,6 +193,56 @@ export default function AllUsersPage() {
           </tbody>
         </table>
       </div>
+
+      {users.length === 0 && (
+        <div className="mt-6 rounded-2xl border border-dashed p-8 text-center text-gray-600">
+          No user found.
+        </div>
+      )}
+
+      <Pagination page={page} totalPages={totalPages} setPage={setPage} />
     </section>
+  );
+}
+
+function Pagination({ page, totalPages, setPage }) {
+  if (totalPages <= 1) return null;
+
+  return (
+    <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+      <button
+        onClick={() => setPage(page - 1)}
+        disabled={page === 1}
+        className="rounded-lg border px-4 py-2 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
+      >
+        Prev
+      </button>
+
+      {[...Array(totalPages)].map((_, index) => {
+        const pageNumber = index + 1;
+
+        return (
+          <button
+            key={pageNumber}
+            onClick={() => setPage(pageNumber)}
+            className={`rounded-lg border px-4 py-2 ${
+              page === pageNumber
+                ? "bg-red-700 text-white"
+                : "hover:bg-red-50 hover:text-red-700"
+            }`}
+          >
+            {pageNumber}
+          </button>
+        );
+      })}
+
+      <button
+        onClick={() => setPage(page + 1)}
+        disabled={page === totalPages}
+        className="rounded-lg border px-4 py-2 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
+      >
+        Next
+      </button>
+    </div>
   );
 }
