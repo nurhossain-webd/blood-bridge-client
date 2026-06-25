@@ -1,19 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSession } from "@/lib/auth-client";
 import axiosPublic from "@/lib/axiosPublic";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import districtsData from "@/data/districts.json";
+import upazilasData from "@/data/upazilas.json";
 
 const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
-
-const districts = {
-  Dhaka: ["Dhanmondi", "Mirpur", "Uttara", "Savar"],
-  Chattogram: ["Pahartali", "Kotwali", "Halishahar"],
-  Sylhet: ["Sylhet Sadar", "Beanibazar", "Zakiganj"],
-  Rajshahi: ["Boalia", "Paba", "Godagari"],
-};
 
 export default function CreateDonationRequestForm() {
   const router = useRouter();
@@ -24,13 +19,32 @@ export default function CreateDonationRequestForm() {
   const [loading, setLoading] = useState(false);
   const [userLoading, setUserLoading] = useState(true);
 
+  const districts =
+    districtsData[2]?.data || districtsData.data || districtsData;
+  const upazilas =
+    upazilasData[2]?.data || upazilasData.data || upazilasData;
+
+  const filteredUpazilas = useMemo(() => {
+    const district = districts.find((item) => item.name === selectedDistrict);
+    if (!district) return [];
+
+    return upazilas.filter(
+      (upazila) => String(upazila.district_id) === String(district.id)
+    );
+  }, [selectedDistrict, districts, upazilas]);
+
   useEffect(() => {
     const loadUser = async () => {
       if (!session?.user?.email) return;
 
-      const res = await axiosPublic.get(`/users/${session.user.email}`);
-      setDbUser(res.data);
-      setUserLoading(false);
+      try {
+        const res = await axiosPublic.get(`/users/${session.user.email}`);
+        setDbUser(res.data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setUserLoading(false);
+      }
     };
 
     loadUser();
@@ -68,14 +82,12 @@ export default function CreateDonationRequestForm() {
     try {
       setLoading(true);
 
-      const res = await axiosPublic.post(
-        "/donation-requests",
-        donationRequest
-      );
+      const res = await axiosPublic.post("/donation-requests", donationRequest);
 
       if (res.data.insertedId) {
         toast.success("Donation request created successfully");
         form.reset();
+        setSelectedDistrict("");
         router.push("/dashboard/my-donation-requests");
       }
     } catch (error) {
@@ -161,9 +173,9 @@ export default function CreateDonationRequestForm() {
             className="w-full rounded-xl border px-4 py-3 outline-none focus:border-red-500"
           >
             <option value="">Select district</option>
-            {Object.keys(districts).map((district) => (
-              <option key={district} value={district}>
-                {district}
+            {districts.map((district) => (
+              <option key={district.id} value={district.name}>
+                {district.name}
               </option>
             ))}
           </select>
@@ -174,15 +186,15 @@ export default function CreateDonationRequestForm() {
           <select
             name="recipientUpazila"
             required
-            className="w-full rounded-xl border px-4 py-3 outline-none focus:border-red-500"
+            disabled={!selectedDistrict}
+            className="w-full rounded-xl border px-4 py-3 outline-none focus:border-red-500 disabled:bg-gray-100"
           >
             <option value="">Select upazila</option>
-            {selectedDistrict &&
-              districts[selectedDistrict]?.map((upazila) => (
-                <option key={upazila} value={upazila}>
-                  {upazila}
-                </option>
-              ))}
+            {filteredUpazilas.map((upazila) => (
+              <option key={upazila.id} value={upazila.name}>
+                {upazila.name}
+              </option>
+            ))}
           </select>
         </div>
 

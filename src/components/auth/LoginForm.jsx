@@ -36,7 +36,7 @@ export default function LoginForm() {
 
       toast.success("Login successful");
 
-      router.push("/dashboard");
+      router.push("/");
       router.refresh();
     } catch (error) {
       console.error(error);
@@ -55,6 +55,11 @@ export default function LoginForm() {
         <p className="mt-3 text-gray-600">
           Login to manage your blood donation activities.
         </p>
+         <Link href="/" className="mt-3 inline-block font-semibold text-red-700">
+
+    ← Back to Home
+
+  </Link>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">

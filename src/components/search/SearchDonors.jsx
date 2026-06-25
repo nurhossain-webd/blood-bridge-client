@@ -1,19 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import axiosPublic from "@/lib/axiosPublic";
 import { ChevronDown, Droplet, MapPin, Search } from "lucide-react";
+import districtsData from "@/data/districts.json";
+import upazilasData from "@/data/upazilas.json";
 
 const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
-const districts = {
-  Dhaka: ["Dhanmondi", "Mirpur", "Uttara", "Savar"],
-  Chattogram: ["Pahartali", "Kotwali", "Halishahar"],
-  Sylhet: ["Sylhet Sadar", "Beanibazar", "Zakiganj"],
-  Rajshahi: ["Boalia", "Paba", "Godagari"],
-};
-
 export default function SearchDonors() {
+  const districts = districtsData[2]?.data || districtsData.data || districtsData;
+  const upazilas = upazilasData[2]?.data || upazilasData.data || upazilasData;
+
   const [form, setForm] = useState({
     bloodGroup: "",
     district: "",
@@ -24,6 +22,15 @@ export default function SearchDonors() {
   const [donors, setDonors] = useState([]);
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const filteredUpazilas = useMemo(() => {
+    const district = districts.find((item) => item.name === form.district);
+    if (!district) return [];
+
+    return upazilas.filter(
+      (upazila) => String(upazila.district_id) === String(district.id)
+    );
+  }, [form.district, districts, upazilas]);
 
   const updateField = (name, value) => {
     setForm((prev) => ({
@@ -37,15 +44,25 @@ export default function SearchDonors() {
   const handleSearch = async (e) => {
     e.preventDefault();
 
-    setLoading(true);
-    setSearched(true);
+    try {
+      setLoading(true);
+      setSearched(true);
 
-    const res = await axiosPublic.get(
-      `/donors/search?bloodGroup=${form.bloodGroup}&district=${form.district}&upazila=${form.upazila}`
-    );
+      const res = await axiosPublic.get("/donors/search", {
+        params: {
+          bloodGroup: form.bloodGroup,
+          district: form.district,
+          upazila: form.upazila,
+        },
+      });
 
-    setDonors(res.data);
-    setLoading(false);
+      setDonors(res.data);
+    } catch (error) {
+      console.error(error);
+      setDonors([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -76,7 +93,9 @@ export default function SearchDonors() {
               options={bloodGroups}
               open={openDropdown === "bloodGroup"}
               onToggle={() =>
-                setOpenDropdown(openDropdown === "bloodGroup" ? null : "bloodGroup")
+                setOpenDropdown(
+                  openDropdown === "bloodGroup" ? null : "bloodGroup"
+                )
               }
               onSelect={(value) => updateField("bloodGroup", value)}
             />
@@ -86,10 +105,12 @@ export default function SearchDonors() {
               icon={<MapPin size={18} />}
               value={form.district}
               placeholder="Select district"
-              options={Object.keys(districts)}
+              options={districts.map((district) => district.name)}
               open={openDropdown === "district"}
               onToggle={() =>
-                setOpenDropdown(openDropdown === "district" ? null : "district")
+                setOpenDropdown(
+                  openDropdown === "district" ? null : "district"
+                )
               }
               onSelect={(value) => updateField("district", value)}
             />
@@ -99,7 +120,7 @@ export default function SearchDonors() {
               icon={<MapPin size={18} />}
               value={form.upazila}
               placeholder="Select upazila"
-              options={form.district ? districts[form.district] : []}
+              options={filteredUpazilas.map((upazila) => upazila.name)}
               open={openDropdown === "upazila"}
               disabled={!form.district}
               onToggle={() =>

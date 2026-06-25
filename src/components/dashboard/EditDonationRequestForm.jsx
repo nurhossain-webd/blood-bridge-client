@@ -1,18 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import axiosPublic from "@/lib/axiosPublic";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import districtsData from "@/data/districts.json";
+import upazilasData from "@/data/upazilas.json";
 
 const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
-
-const districts = {
-  Dhaka: ["Dhanmondi", "Mirpur", "Uttara", "Savar"],
-  Chattogram: ["Pahartali", "Kotwali", "Halishahar"],
-  Sylhet: ["Sylhet Sadar", "Beanibazar", "Zakiganj"],
-  Rajshahi: ["Boalia", "Paba", "Godagari"],
-};
 
 export default function EditDonationRequestForm({ id }) {
   const router = useRouter();
@@ -22,12 +17,32 @@ export default function EditDonationRequestForm({ id }) {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
 
+  const districts =
+    districtsData[2]?.data || districtsData.data || districtsData;
+  const upazilas =
+    upazilasData[2]?.data || upazilasData.data || upazilasData;
+
+  const filteredUpazilas = useMemo(() => {
+    const district = districts.find((item) => item.name === selectedDistrict);
+    if (!district) return [];
+
+    return upazilas.filter(
+      (upazila) => String(upazila.district_id) === String(district.id)
+    );
+  }, [selectedDistrict, districts, upazilas]);
+
   useEffect(() => {
     const loadRequest = async () => {
-      const res = await axiosPublic.get(`/donation-requests/${id}`);
-      setRequest(res.data);
-      setSelectedDistrict(res.data?.recipientDistrict || "");
-      setLoading(false);
+      try {
+        const res = await axiosPublic.get(`/donation-requests/${id}`);
+        setRequest(res.data);
+        setSelectedDistrict(res.data?.recipientDistrict || "");
+      } catch (error) {
+        console.error(error);
+        toast.error("Failed to load donation request");
+      } finally {
+        setLoading(false);
+      }
     };
 
     loadRequest();
@@ -76,12 +91,13 @@ export default function EditDonationRequestForm({ id }) {
 
       if (res.data.modifiedCount > 0) {
         toast.success("Donation request updated");
-        router.push("/dashboard/my-donation-requests");
       } else {
         toast("No changes made");
-        router.push("/dashboard/my-donation-requests");
       }
+
+      router.push("/dashboard/my-donation-requests");
     } catch (error) {
+      console.error(error);
       toast.error("Failed to update request");
     } finally {
       setUpdating(false);
@@ -176,9 +192,9 @@ export default function EditDonationRequestForm({ id }) {
             className="w-full rounded-xl border px-4 py-3 outline-none focus:border-red-500"
           >
             <option value="">Select district</option>
-            {Object.keys(districts).map((district) => (
-              <option key={district} value={district}>
-                {district}
+            {districts.map((district) => (
+              <option key={district.id} value={district.name}>
+                {district.name}
               </option>
             ))}
           </select>
@@ -191,15 +207,15 @@ export default function EditDonationRequestForm({ id }) {
             required
             value={request.recipientUpazila || ""}
             onChange={handleChange}
-            className="w-full rounded-xl border px-4 py-3 outline-none focus:border-red-500"
+            disabled={!selectedDistrict}
+            className="w-full rounded-xl border px-4 py-3 outline-none focus:border-red-500 disabled:bg-gray-100"
           >
             <option value="">Select upazila</option>
-            {selectedDistrict &&
-              districts[selectedDistrict]?.map((upazila) => (
-                <option key={upazila} value={upazila}>
-                  {upazila}
-                </option>
-              ))}
+            {filteredUpazilas.map((upazila) => (
+              <option key={upazila.id} value={upazila.name}>
+                {upazila.name}
+              </option>
+            ))}
           </select>
         </div>
 

@@ -1,18 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSession } from "@/lib/auth-client";
 import axiosPublic from "@/lib/axiosPublic";
 import toast from "react-hot-toast";
+import districtsData from "@/data/districts.json";
+import upazilasData from "@/data/upazilas.json";
 
 const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
-
-const districts = {
-  Dhaka: ["Dhanmondi", "Mirpur", "Uttara", "Savar"],
-  Chattogram: ["Pahartali", "Kotwali", "Halishahar"],
-  Sylhet: ["Sylhet Sadar", "Beanibazar", "Zakiganj"],
-  Rajshahi: ["Boalia", "Paba", "Godagari"],
-};
 
 export default function ProfileForm() {
   const { data: session, isPending } = useSession();
@@ -20,13 +15,32 @@ export default function ProfileForm() {
   const [editable, setEditable] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  const districts =
+    districtsData[2]?.data || districtsData.data || districtsData;
+  const upazilas =
+    upazilasData[2]?.data || upazilasData.data || upazilasData;
+
+  const filteredUpazilas = useMemo(() => {
+    const district = districts.find((item) => item.name === user?.district);
+    if (!district) return [];
+
+    return upazilas.filter(
+      (upazila) => String(upazila.district_id) === String(district.id)
+    );
+  }, [user?.district, districts, upazilas]);
+
   useEffect(() => {
     const loadUser = async () => {
       if (!session?.user?.email) return;
 
-      const res = await axiosPublic.get(`/users/${session.user.email}`);
-      setUser(res.data);
-      setLoading(false);
+      try {
+        const res = await axiosPublic.get(`/users/${session.user.email}`);
+        setUser(res.data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
     };
 
     loadUser();
@@ -34,6 +48,14 @@ export default function ProfileForm() {
 
   const handleChange = (e) => {
     setUser({ ...user, [e.target.name]: e.target.value });
+  };
+
+  const handleDistrictChange = (e) => {
+    setUser({
+      ...user,
+      district: e.target.value,
+      upazila: "",
+    });
   };
 
   const handleSave = async (e) => {
@@ -50,13 +72,13 @@ export default function ProfileForm() {
     }
   };
 
- if (isPending || loading) {
-  return (
-    <div className="flex min-h-[60vh] items-center justify-center">
-      <div className="h-12 w-12 animate-spin rounded-full border-4 border-red-200 border-t-red-700"></div>
-    </div>
-  );
-}
+  if (isPending || loading) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="h-12 w-12 animate-spin rounded-full border-4 border-red-200 border-t-red-700"></div>
+      </div>
+    );
+  }
 
   if (!user) {
     return <p>User profile not found.</p>;
@@ -67,7 +89,9 @@ export default function ProfileForm() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
-          <p className="mt-1 text-gray-600">View and update your information.</p>
+          <p className="mt-1 text-gray-600">
+            View and update your information.
+          </p>
         </div>
 
         {!editable && (
@@ -121,6 +145,7 @@ export default function ProfileForm() {
             onChange={handleChange}
             className="w-full rounded-xl border px-4 py-3 disabled:bg-gray-100"
           >
+            <option value="">Select blood group</option>
             {bloodGroups.map((group) => (
               <option key={group} value={group}>
                 {group}
@@ -135,12 +160,13 @@ export default function ProfileForm() {
             name="district"
             value={user.district || ""}
             disabled={!editable}
-            onChange={handleChange}
+            onChange={handleDistrictChange}
             className="w-full rounded-xl border px-4 py-3 disabled:bg-gray-100"
           >
-            {Object.keys(districts).map((district) => (
-              <option key={district} value={district}>
-                {district}
+            <option value="">Select district</option>
+            {districts.map((district) => (
+              <option key={district.id} value={district.name}>
+                {district.name}
               </option>
             ))}
           </select>
@@ -151,13 +177,14 @@ export default function ProfileForm() {
           <select
             name="upazila"
             value={user.upazila || ""}
-            disabled={!editable}
+            disabled={!editable || !user.district}
             onChange={handleChange}
             className="w-full rounded-xl border px-4 py-3 disabled:bg-gray-100"
           >
-            {districts[user.district]?.map((upazila) => (
-              <option key={upazila} value={upazila}>
-                {upazila}
+            <option value="">Select upazila</option>
+            {filteredUpazilas.map((upazila) => (
+              <option key={upazila.id} value={upazila.name}>
+                {upazila.name}
               </option>
             ))}
           </select>

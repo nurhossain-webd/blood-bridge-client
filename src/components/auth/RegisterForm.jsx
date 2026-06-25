@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -8,26 +8,34 @@ import toast from "react-hot-toast";
 import axios from "axios";
 import axiosPublic from "@/lib/axiosPublic";
 import { authClient } from "@/lib/auth-client";
+import districtsData from "@/data/districts.json";
+import upazilasData from "@/data/upazilas.json";
 
 const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
-
-const districts = {
-  Dhaka: ["Dhanmondi", "Mirpur", "Uttara", "Savar"],
-  Chattogram: ["Pahartali", "Kotwali", "Halishahar"],
-  Sylhet: ["Sylhet Sadar", "Beanibazar", "Zakiganj"],
-  Rajshahi: ["Boalia", "Paba", "Godagari"],
-};
 
 export default function RegisterForm() {
   const router = useRouter();
   const [selectedDistrict, setSelectedDistrict] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const districts = districtsData[2]?.data || districtsData.data || districtsData;
+  const upazilas = upazilasData[2]?.data || upazilasData.data || upazilasData;
+
+  const filteredUpazilas = useMemo(() => {
+    const district = districts.find((item) => item.name === selectedDistrict);
+    if (!district) return [];
+
+    return upazilas.filter(
+      (upazila) => String(upazila.district_id) === String(district.id)
+    );
+  }, [selectedDistrict, districts, upazilas]);
+
   const {
     register,
     handleSubmit,
     watch,
     reset,
+    setValue,
     formState: { errors },
   } = useForm();
 
@@ -90,7 +98,7 @@ export default function RegisterForm() {
 
       toast.success("Registration successful");
       reset();
-      router.push("/dashboard");
+      router.push("/");
       router.refresh();
     } catch (error) {
       console.error(error);
@@ -111,6 +119,11 @@ export default function RegisterForm() {
         <p className="mt-3 text-gray-600">
           Create your donor account and help save lives.
         </p>
+         <Link href="/" className="mt-3 inline-block font-semibold text-red-700">
+
+    ← Back to Home
+
+  </Link>
       </div>
 
       <form
@@ -186,13 +199,16 @@ export default function RegisterForm() {
           </label>
           <select
             {...register("district", { required: "District is required" })}
-            onChange={(e) => setSelectedDistrict(e.target.value)}
+            onChange={(e) => {
+              setSelectedDistrict(e.target.value);
+              setValue("upazila", "");
+            }}
             className="w-full rounded-xl border px-4 py-3 outline-none focus:border-red-500"
           >
             <option value="">Select district</option>
-            {Object.keys(districts).map((district) => (
-              <option key={district} value={district}>
-                {district}
+            {districts.map((district) => (
+              <option key={district.id} value={district.name}>
+                {district.name}
               </option>
             ))}
           </select>
@@ -207,15 +223,15 @@ export default function RegisterForm() {
           <label className="mb-2 block font-medium text-gray-700">Upazila</label>
           <select
             {...register("upazila", { required: "Upazila is required" })}
-            className="w-full rounded-xl border px-4 py-3 outline-none focus:border-red-500"
+            disabled={!selectedDistrict}
+            className="w-full rounded-xl border px-4 py-3 outline-none focus:border-red-500 disabled:bg-gray-100"
           >
             <option value="">Select upazila</option>
-            {selectedDistrict &&
-              districts[selectedDistrict]?.map((upazila) => (
-                <option key={upazila} value={upazila}>
-                  {upazila}
-                </option>
-              ))}
+            {filteredUpazilas.map((upazila) => (
+              <option key={upazila.id} value={upazila.name}>
+                {upazila.name}
+              </option>
+            ))}
           </select>
           {errors.upazila && (
             <p className="mt-1 text-sm text-red-600">
