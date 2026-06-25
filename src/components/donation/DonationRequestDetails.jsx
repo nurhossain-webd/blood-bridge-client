@@ -16,17 +16,20 @@ export default function DonationRequestDetails({ id }) {
   const [donating, setDonating] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
 
-  const loadData = async () => {
-    const requestRes = await axiosPublic.get(`/donation-requests/${id}`);
-    setRequest(requestRes.data);
+ const loadData = async () => {
+  if (!session?.user?.email) {
+    router.push("/login");
+    return;
+  }
 
-    if (session?.user?.email) {
-      const userRes = await axiosPublic.get(`/users/${session.user.email}`);
-      setDbUser(userRes.data);
-    }
+  const requestRes = await axiosPublic.get(`/donation-requests/${id}`);
+  setRequest(requestRes.data);
 
-    setLoading(false);
-  };
+  const userRes = await axiosPublic.get(`/users/${session.user.email}`);
+  setDbUser(userRes.data);
+
+  setLoading(false);
+};
 
   useEffect(() => {
     if (!isPending) {

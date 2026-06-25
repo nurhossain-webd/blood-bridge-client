@@ -27,7 +27,6 @@ export default function Navbar() {
       router.push("/login");
       router.refresh();
     } catch (error) {
-      console.error(error);
       toast.error("Logout failed");
     }
   };
@@ -35,7 +34,7 @@ export default function Navbar() {
   const navLinkClass = (href) =>
     pathname === href
       ? "font-semibold text-red-700"
-      : "text-gray-700 hover:text-red-700";
+      : "text-gray-700 transition hover:text-red-700";
 
   return (
     <nav className="fixed left-0 top-0 z-50 w-full border-b bg-white/95 shadow-sm backdrop-blur">
@@ -48,37 +47,70 @@ export default function Navbar() {
           BloodBridge
         </Link>
 
-        <div className="hidden items-center gap-7 font-medium md:flex">
-          <Link
-            href="/donation-requests"
-            className={navLinkClass("/donation-requests")}
-          >
-            Donation Requests
-          </Link>
-
-          {session?.user ? (
+        <div className="hidden items-center gap-8 font-medium md:flex">
+          {!session?.user ? (
             <>
+              <Link href="/" className={navLinkClass("/")}>
+                Home
+              </Link>
+
+              <Link
+                href="/donation-requests"
+                className={navLinkClass("/donation-requests")}
+              >
+                Donation Requests
+              </Link>
+
+              <Link href="/search" className={navLinkClass("/search")}>
+                Search Donors
+              </Link>
+
+              <Link
+                href="/login"
+                className="rounded-xl bg-red-700 px-5 py-2 text-white transition hover:bg-red-800"
+              >
+                Login
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link href="/" className={navLinkClass("/")}>
+                Home
+              </Link>
+
+              <Link
+                href="/donation-requests"
+                className={navLinkClass("/donation-requests")}
+              >
+                Donation Requests
+              </Link>
+
+              <Link href="/search" className={navLinkClass("/search")}>
+                Search Donors
+              </Link>
+
               <Link href="/funding" className={navLinkClass("/funding")}>
                 Funding
               </Link>
 
               <div className="relative">
                 <button
-                  type="button"
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex items-center gap-2 rounded-full bg-red-50 px-2 py-1 hover:bg-red-100"
+                  className="flex items-center gap-2 rounded-full bg-red-50 px-2 py-1 transition hover:bg-red-100"
                 >
                   <img
                     src={userImage}
                     alt={userName}
                     className="h-10 w-10 rounded-full object-cover"
                   />
-                  <span className="hidden text-sm font-semibold text-gray-800 lg:block">
+
+                  <span className="hidden font-semibold text-gray-800 lg:block">
                     {userName}
                   </span>
+
                   <ChevronDown
-                    size={16}
-                    className={`text-gray-600 transition ${
+                    size={18}
+                    className={`text-gray-700 transition ${
                       userMenuOpen ? "rotate-180" : ""
                     }`}
                   />
@@ -104,13 +136,6 @@ export default function Navbar() {
                 )}
               </div>
             </>
-          ) : (
-            <Link
-              href="/login"
-              className="rounded-xl bg-red-700 px-5 py-2 text-white"
-            >
-              Login
-            </Link>
           )}
         </div>
 
@@ -122,15 +147,47 @@ export default function Navbar() {
       {open && (
         <div className="border-t bg-white px-5 py-4 md:hidden">
           <div className="flex flex-col gap-4 font-medium">
-            <Link
-              href="/donation-requests"
-              className={navLinkClass("/donation-requests")}
-            >
-              Donation Requests
-            </Link>
-
-            {session?.user ? (
+            {!session?.user ? (
               <>
+                <Link href="/" className={navLinkClass("/")}>
+                  Home
+                </Link>
+
+                <Link
+                  href="/donation-requests"
+                  className={navLinkClass("/donation-requests")}
+                >
+                  Donation Requests
+                </Link>
+
+                <Link href="/search" className={navLinkClass("/search")}>
+                  Search Donors
+                </Link>
+
+                <Link
+                  href="/login"
+                  className="rounded-xl bg-red-700 px-4 py-2 text-center text-white"
+                >
+                  Login
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href="/" className={navLinkClass("/")}>
+                  Home
+                </Link>
+
+                <Link
+                  href="/donation-requests"
+                  className={navLinkClass("/donation-requests")}
+                >
+                  Donation Requests
+                </Link>
+
+                <Link href="/search" className={navLinkClass("/search")}>
+                  Search Donors
+                </Link>
+
                 <Link href="/funding" className={navLinkClass("/funding")}>
                   Funding
                 </Link>
@@ -141,9 +198,10 @@ export default function Navbar() {
                     alt={userName}
                     className="h-10 w-10 rounded-full object-cover"
                   />
-                  <p className="text-sm font-semibold text-gray-800">
+
+                  <span className="font-semibold text-gray-800">
                     {userName}
-                  </p>
+                  </span>
                 </div>
 
                 <Link href="/dashboard" className={navLinkClass("/dashboard")}>
@@ -154,10 +212,6 @@ export default function Navbar() {
                   Logout
                 </button>
               </>
-            ) : (
-              <Link href="/login" className={navLinkClass("/login")}>
-                Login
-              </Link>
             )}
           </div>
         </div>
