@@ -10,7 +10,7 @@ export default function NotFound() {
         <h1 className="mt-6 text-5xl font-bold text-gray-900">404</h1>
 
         <h2 className="mt-3 text-2xl font-bold text-gray-900">
-          Page Not Found
+          Page Not Found !!
         </h2>
 
         <p className="mt-3 text-gray-600">
