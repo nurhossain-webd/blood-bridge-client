@@ -35,6 +35,9 @@ export default function Navbar() {
       <Link href="/search" className="hover:text-red-700">
         Search Donors
       </Link>
+      <Link href="/funding" className="hover:text-red-700">
+  Funding
+</Link>
     </>
   );
 
