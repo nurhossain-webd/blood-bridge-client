@@ -17,23 +17,33 @@ export default function LoginForm() {
   } = useForm();
 
   const onSubmit = async (data) => {
-    const { error } = await authClient.signIn.email({
-      email: data.email,
-      password: data.password,
-    });
+    try {
+      const { error } = await authClient.signIn.email({
+        email: data.email,
+        password: data.password,
+      });
 
-    if (error) {
-      toast.error(error.message || "Login failed");
-      return;
+      if (error) {
+        toast.error(error.message || "Login failed");
+        return;
+      }
+
+      const jwtRes = await axiosPublic.post("/jwt", {
+        email: data.email,
+      });
+
+      localStorage.setItem("access_token", jwtRes.data.token);
+
+      toast.success("Login successful");
+
+      router.push("/dashboard");
+      router.refresh();
+    } catch (error) {
+      console.error(error);
+      toast.error(
+        error.response?.data?.message || "Something went wrong"
+      );
     }
-
-    await axiosPublic.post("/jwt", { email: data.email });
-    const jwtRes = await axiosPublic.post("/jwt", { email: data.email });
-localStorage.setItem("access_token", jwtRes.data.token);
-
-    toast.success("Login successful");
-    router.push("/dashboard");
-    router.refresh();
   };
 
   return (
@@ -49,15 +59,21 @@ localStorage.setItem("access_token", jwtRes.data.token);
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <div>
-          <label className="mb-2 block font-medium text-gray-700">Email</label>
+          <label className="mb-2 block font-medium text-gray-700">
+            Email
+          </label>
           <input
             type="email"
-            {...register("email", { required: "Email is required" })}
+            {...register("email", {
+              required: "Email is required",
+            })}
             className="w-full rounded-xl border px-4 py-3 outline-none focus:border-red-500"
             placeholder="your@email.com"
           />
           {errors.email && (
-            <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+            <p className="mt-1 text-sm text-red-600">
+              {errors.email.message}
+            </p>
           )}
         </div>
 
@@ -67,7 +83,9 @@ localStorage.setItem("access_token", jwtRes.data.token);
           </label>
           <input
             type="password"
-            {...register("password", { required: "Password is required" })}
+            {...register("password", {
+              required: "Password is required",
+            })}
             className="w-full rounded-xl border px-4 py-3 outline-none focus:border-red-500"
             placeholder="Your password"
           />
@@ -89,7 +107,10 @@ localStorage.setItem("access_token", jwtRes.data.token);
 
       <p className="mt-6 text-center text-gray-600">
         New donor?{" "}
-        <Link href="/register" className="font-semibold text-red-700">
+        <Link
+          href="/register"
+          className="font-semibold text-red-700"
+        >
           Create account
         </Link>
       </p>

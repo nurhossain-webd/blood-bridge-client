@@ -95,11 +95,10 @@ export default function DashboardSidebar() {
     menuItems = volunteerLinks;
   }
 
- const handleLogout = async () => {
+const handleLogout = async () => {
   try {
-    await axiosPublic.post("/logout");
-    await authClient.signOut();
     localStorage.removeItem("access_token");
+    await authClient.signOut();
 
     toast.success("Logged out successfully");
     router.push("/login");

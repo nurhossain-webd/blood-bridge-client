@@ -13,20 +13,19 @@ export default function Navbar() {
   const { data: session } = useSession();
   const [open, setOpen] = useState(false);
 
-  const handleLogout = async () => {
-    try {
-      await axiosPublic.post("/logout");
-      await authClient.signOut();
-      localStorage.removeItem("access_token");
+ const handleLogout = async () => {
+  try {
+    localStorage.removeItem("access_token");
+    await authClient.signOut();
 
-      toast.success("Logged out successfully");
-      router.push("/");
-      router.refresh();
-    } catch (error) {
-      console.error(error);
-      toast.error("Logout failed");
-    }
-  };
+    toast.success("Logged out successfully");
+    router.push("/login");
+    router.refresh();
+  } catch (error) {
+    console.error(error);
+    toast.error("Logout failed");
+  }
+};
 
   const links = (
     <>

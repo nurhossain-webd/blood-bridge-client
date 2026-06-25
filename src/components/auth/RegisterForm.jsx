@@ -37,7 +37,7 @@ export default function RegisterForm() {
     const apiKey = process.env.NEXT_PUBLIC_IMGBB_API_KEY;
 
     if (!apiKey || apiKey === "your_imgbb_api_key_here") {
-      throw new Error("ImageBB API key is missing in .env.local");
+      throw new Error("ImageBB API key is missing");
     }
 
     const formData = new FormData();
@@ -81,9 +81,12 @@ export default function RegisterForm() {
       };
 
       await axiosPublic.post("/users", userInfo);
-      await axiosPublic.post("/jwt", { email: data.email });
-      const jwtRes = await axiosPublic.post("/jwt", { email: data.email });
-localStorage.setItem("access_token", jwtRes.data.token);
+
+      const jwtRes = await axiosPublic.post("/jwt", {
+        email: data.email,
+      });
+
+      localStorage.setItem("access_token", jwtRes.data.token);
 
       toast.success("Registration successful");
       reset();
@@ -91,7 +94,9 @@ localStorage.setItem("access_token", jwtRes.data.token);
       router.refresh();
     } catch (error) {
       console.error(error);
-      toast.error(error.response?.data?.message || error.message || "Something went wrong");
+      toast.error(
+        error.response?.data?.message || error.message || "Something went wrong"
+      );
     } finally {
       setLoading(false);
     }
@@ -108,7 +113,10 @@ localStorage.setItem("access_token", jwtRes.data.token);
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="grid gap-5 md:grid-cols-2">
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="grid gap-5 md:grid-cols-2"
+      >
         <div>
           <label className="mb-2 block font-medium text-gray-700">Name</label>
           <input
@@ -144,7 +152,9 @@ localStorage.setItem("access_token", jwtRes.data.token);
             className="w-full rounded-xl border px-4 py-3 outline-none focus:border-red-500"
           />
           {errors.avatar && (
-            <p className="mt-1 text-sm text-red-600">{errors.avatar.message}</p>
+            <p className="mt-1 text-sm text-red-600">
+              {errors.avatar.message}
+            </p>
           )}
         </div>
 
@@ -171,7 +181,9 @@ localStorage.setItem("access_token", jwtRes.data.token);
         </div>
 
         <div>
-          <label className="mb-2 block font-medium text-gray-700">District</label>
+          <label className="mb-2 block font-medium text-gray-700">
+            District
+          </label>
           <select
             {...register("district", { required: "District is required" })}
             onChange={(e) => setSelectedDistrict(e.target.value)}
@@ -213,7 +225,9 @@ localStorage.setItem("access_token", jwtRes.data.token);
         </div>
 
         <div>
-          <label className="mb-2 block font-medium text-gray-700">Password</label>
+          <label className="mb-2 block font-medium text-gray-700">
+            Password
+          </label>
           <input
             type="password"
             {...register("password", {
