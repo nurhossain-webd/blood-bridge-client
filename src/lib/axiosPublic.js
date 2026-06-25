@@ -5,4 +5,15 @@ const axiosPublic = axios.create({
   withCredentials: true,
 });
 
+axiosPublic.interceptors.request.use((config) => {
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("access_token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  }
+
+  return config;
+});
+
 export default axiosPublic;

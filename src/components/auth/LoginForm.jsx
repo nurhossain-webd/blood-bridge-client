@@ -28,6 +28,8 @@ export default function LoginForm() {
     }
 
     await axiosPublic.post("/jwt", { email: data.email });
+    const jwtRes = await axiosPublic.post("/jwt", { email: data.email });
+localStorage.setItem("access_token", jwtRes.data.token);
 
     toast.success("Login successful");
     router.push("/dashboard");

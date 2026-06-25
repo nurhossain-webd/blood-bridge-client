@@ -17,6 +17,7 @@ export default function Navbar() {
     try {
       await axiosPublic.post("/logout");
       await authClient.signOut();
+      localStorage.removeItem("access_token");
 
       toast.success("Logged out successfully");
       router.push("/");
